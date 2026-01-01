@@ -1,0 +1,152 @@
+version: "3.8"
+
+# ⚠️ PRODUCTION DEPLOYMENT NOTES:
+# This docker-compose.yml is for LOCAL DEVELOPMENT only.
+# For PRODUCTION deployment:
+# 1. Use MongoDB Atlas (managed database) - NOT this local MongoDB
+# 2. Store JWT_SECRET and MONGO_URI in secrets manager (AWS/GCP/Vault)
+# 3. Enable HTTPS/TLS with managed certificates (ACM, Let's Encrypt)
+# 4. Scale ML service separately (different compute requirements)
+# 5. Use managed platforms: AWS ECS/Fargate, GCP Cloud Run, or Railway
+# See DEPLOYMENT.md for complete production deployment guide.
+
+services:
+  # MongoDB Database (LOCAL DEVELOPMENT ONLY)
+  # ⚠️ For production, use MongoDB Atlas: https://www.mongodb.com/cloud/atlas
+  mongo:
+    image: mongo:7.0
+    container_name: apricity-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme123}
+      MONGO_INITDB_DATABASE: apricity
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - apricity-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/apricity --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ML Service (Python FastAPI)
+  # ⚠️ For production:
+  # - Store ML models in object storage (AWS S3, GCP Cloud Storage)
+  # - Use MODEL_PATH=s3://bucket/models or gs://bucket/models
+  # - Scale separately from backend (different CPU/GPU requirements)
+  # - Consider using GPU instances for faster inference
+  ml_service:
+    build:
+      context: ./ml_service
+      dockerfile: Dockerfile
+    container_name: apricity-ml-service
+    restart: unless-stopped
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - MODEL_PATH=/app/models # ⚠️ Use S3/GCS path in production
+      - LOG_LEVEL=${ML_LOG_LEVEL:-info}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount models directory for persistent model storage (LOCAL ONLY)
+      # ⚠️ In production, load models from S3/GCS instead
+      - ./ml_service/models:/app/models:ro
+      # Mount source code for development (comment out for production)
+      - ./ml_service:/app:ro
+    networks:
+      - apricity-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Backend API (Node.js Express)
+  # ⚠️ For production:
+  # - Store JWT_SECRET in secrets manager (AWS Secrets Manager, GCP Secret Manager)
+  # - Store MONGO_URI in secrets manager (connection string to MongoDB Atlas)
+  # - Never use environment variables from .env files in production
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: apricity-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=5000
+      - HOST=0.0.0.0
+      - MONGO_URI=mongodb://mongo:27017/apricity # ⚠️ Use MongoDB Atlas URI in production
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production} # ⚠️ Use secrets manager in production
+      - ML_SERVICE_URL=http://ml_service:8000
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./backend/src:/app/src:ro
+      - ./backend/package.json:/app/package.json:ro
+    networks:
+      - apricity-network
+    depends_on:
+      mongo:
+        condition: service_healthy
+      ml_service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (React + Vite) - Optional
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: apricity-frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.js:/app/vite.config.js:ro
+      - ./frontend/package.json:/app/package.json:ro
+    networks:
+      - apricity-network
+    depends_on:
+      - backend
+    profiles:
+      - full
+      # To run with frontend: docker-compose --profile full up
+      # To run without frontend: docker-compose up
+
+# Named volumes for data persistence
+volumes:
+  mongo_data:
+    driver: local
+    name: apricity-mongo-data
+  mongo_config:
+    driver: local
+    name: apricity-mongo-config
+
+# Custom network for service communication
+networks:
+  apricity-network:
+    driver: bridge
+    name: apricity-network

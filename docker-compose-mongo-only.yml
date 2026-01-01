@@ -1,0 +1,10 @@
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: apricity-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: changeme123
+      MONGO_INITDB_DATABASE: apricity

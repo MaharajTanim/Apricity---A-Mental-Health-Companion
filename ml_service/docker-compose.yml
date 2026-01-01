@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apricity-ml-service
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MODEL_PATH=/app/models/apricity-emotion-bert/best
+      - GENERATION_MODEL_NAME=google/flan-t5-base
+      - MAX_LENGTH=192
+      - MAX_NEW_TOKENS=160
+      - NUM_BEAMS=4
+      - TEMPERATURE=0.7
+      - TOP_P=0.92
+      - DEVICE=cpu
+    volumes:
+      # Mount models directory (download models first)
+      - ./models:/app/models:ro
+      # Mount logs directory for persistent logs
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - apricity-network
+
+  # Optional: ML service with GPU support
+  ml-service-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apricity-ml-service-gpu
+    ports:
+      - "8001:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MODEL_PATH=/app/models/apricity-emotion-bert/best
+      - GENERATION_MODEL_NAME=google/flan-t5-base
+      - DEVICE=cuda
+    volumes:
+      - ./models:/app/models:ro
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    profiles:
+      - gpu
+    networks:
+      - apricity-network
+
+networks:
+  apricity-network:
+    driver: bridge
+# Usage:
+# ======
+#
+# Start CPU service:
+#   docker-compose up -d ml-service
+#
+# Start GPU service (requires nvidia-docker):
+#   docker-compose --profile gpu up -d ml-service-gpu
+#
+# View logs:
+#   docker-compose logs -f ml-service
+#
+# Stop services:
+#   docker-compose down
+#
+# Rebuild and restart:
+#   docker-compose up -d --build ml-service
+#
+# Check service health:
+#   curl http://localhost:8000/health
+#
+# Test prediction:
+#   curl -X POST http://localhost:8000/predict \
+#     -H "Content-Type: application/json" \
+#     -d '{"userId":"123","diaryId":"456","text":"I feel happy today"}'
