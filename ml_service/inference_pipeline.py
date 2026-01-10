@@ -35,7 +35,7 @@ label_names = []
 device = None
 
 # Configuration from environment
-MODEL_PATH = os.getenv("MODEL_PATH", "./models/apricity-emotion-bert/best")
+MODEL_PATH = os.getenv("MODEL_PATH", "microsoft/deberta-v3-base")
 GENERATION_MODEL_PATH = os.getenv("GENERATION_MODEL_PATH", "google/flan-t5-base")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "192"))
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "160"))
@@ -83,7 +83,7 @@ def load_models():
     device = initialize_device()
     
     try:
-        # Load emotion detection model (BERT)
+        # Load emotion detection model (DeBERTa)
         logger.info(f"Loading emotion model from: {MODEL_PATH}")
         emotion_tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, use_fast=True)
         emotion_model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)

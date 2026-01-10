@@ -23,9 +23,9 @@ Create a `.env` file or set environment variables:
 
 ```bash
 # Model Configuration
-MODEL_PATH=./models/apricity-emotion-bert/best
-# Or use HuggingFace model directly:
-# MODEL_PATH=bhadresh-savani/bert-base-uncased-emotion
+MODEL_PATH=microsoft/deberta-v3-base
+# Or use local fine-tuned model:
+# MODEL_PATH=./models/apricity-emotion-deberta/best
 
 GENERATION_MODEL_NAME=google/flan-t5-base
 
@@ -47,7 +47,7 @@ Place your trained models in the `models/` directory:
 
 ```
 models/
-└── apricity-emotion-bert/
+└── apricity-emotion-deberta/
     └── best/
         ├── config.json
         ├── pytorch_model.bin

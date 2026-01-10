@@ -1,6 +1,6 @@
 # Apricity Inference Pipeline
 
-Standalone Python script extracted from the BERT + FLAN-T5 training notebook, providing reusable functions for emotion detection and response generation.
+Standalone Python script extracted from the DeBERTa + FLAN-T5 training notebook, providing reusable functions for emotion detection and response generation.
 
 ## Features
 
@@ -29,7 +29,7 @@ Set environment variables or use defaults:
 
 ```bash
 # Model paths
-export MODEL_PATH="./models/apricity-emotion-bert/best"
+export MODEL_PATH="microsoft/deberta-v3-base"
 export GENERATION_MODEL_PATH="google/flan-t5-base"
 
 # Inference parameters

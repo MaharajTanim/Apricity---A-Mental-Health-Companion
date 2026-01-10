@@ -1,6 +1,6 @@
 """
 Apricity ML Service - Emotion Detection and Response Generation
-FastAPI server for BERT emotion classification and FLAN-T5 response generation
+FastAPI server for DeBERTa emotion classification and FLAN-T5 response generation
 """
 
 import os
@@ -35,7 +35,7 @@ label_names = []
 device = None
 
 # Configuration
-MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "./models/apricity-emotion-bert/best"))
+MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "microsoft/deberta-v3-base"))
 GENERATION_MODEL_NAME = os.getenv("GENERATION_MODEL_NAME", "google/flan-t5-base")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "192"))
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "160"))
@@ -228,7 +228,7 @@ app.add_middleware(
 # Helper Functions
 def detect_emotions(text: str) -> tuple[str, float, List[str]]:
     """
-    Detect emotions using multi-label BERT classifier
+    Detect emotions using multi-label DeBERTa classifier
     Returns: (comma_separated_emotions, confidence_score, list_of_emotions)
     """
     try:

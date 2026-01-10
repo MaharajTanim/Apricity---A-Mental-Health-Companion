@@ -12,11 +12,11 @@ pip install torch transformers numpy
 ### 2. Set Model Path
 
 ```bash
-# Option A: Use local trained model
-export MODEL_PATH="./models/apricity-emotion-bert/best"
+# Option A: Use HuggingFace DeBERTa model (recommended)
+export MODEL_PATH="microsoft/deberta-v3-base"
 
-# Option B: Use HuggingFace pre-trained model
-export MODEL_PATH="bhadresh-savani/bert-base-uncased-emotion"
+# Option B: Use local fine-tuned model
+# export MODEL_PATH="./models/apricity-emotion-deberta/best"
 ```
 
 ### 3. Run Examples
