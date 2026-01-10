@@ -25,9 +25,15 @@ const HomeDashboard = () => {
   const fetchDiaries = async () => {
     setIsLoadingDiaries(true);
     try {
+      console.log("Fetching diaries...");
       const response = await api.get("/api/diary?limit=5&sort=-date");
+      console.log("API Response:", response);
+      console.log("Response data:", response.data);
       if (response.data.success) {
+        console.log("Diaries received:", response.data.data.diaries);
         setDiaries(response.data.data.diaries);
+      } else {
+        console.log("API returned success: false");
       }
     } catch (error) {
       console.error("Error fetching diaries:", error);

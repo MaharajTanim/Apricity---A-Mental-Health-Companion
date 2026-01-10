@@ -35,7 +35,7 @@ label_names = []
 device = None
 
 # Configuration from environment
-MODEL_PATH = os.getenv("MODEL_PATH", "microsoft/deberta-v3-base")
+MODEL_PATH = os.getenv("MODEL_PATH", "SamLowe/roberta-base-go_emotions")
 GENERATION_MODEL_PATH = os.getenv("GENERATION_MODEL_PATH", "google/flan-t5-base")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "192"))
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "160"))

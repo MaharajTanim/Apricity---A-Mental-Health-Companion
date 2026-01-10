@@ -35,7 +35,7 @@ label_names = []
 device = None
 
 # Configuration
-MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "microsoft/deberta-v3-base"))
+MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "SamLowe/roberta-base-go_emotions"))
 GENERATION_MODEL_NAME = os.getenv("GENERATION_MODEL_NAME", "google/flan-t5-base")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "192"))
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "160"))
@@ -180,12 +180,20 @@ async def lifespan(app: FastAPI):
         ).to(device)
         emotion_model.eval()
         
-        # Load label names
-        labels_path = os.path.join(MODEL_PATH, "labels.json")
-        with open(labels_path, 'r') as f:
-            label_map = json.load(f)
-            label_names = [label_map[str(i)] for i in range(len(label_map))]
-        logger.info(f"Loaded {len(label_names)} emotion labels")
+        # Load label names from model config (HuggingFace models have id2label)
+        if hasattr(emotion_model.config, 'id2label') and emotion_model.config.id2label:
+            label_names = [emotion_model.config.id2label[i] for i in range(len(emotion_model.config.id2label))]
+            logger.info(f"Loaded {len(label_names)} emotion labels from model config")
+        else:
+            # Fallback to labels.json file for local models
+            labels_path = os.path.join(MODEL_PATH, "labels.json")
+            if os.path.exists(labels_path):
+                with open(labels_path, 'r') as f:
+                    label_map = json.load(f)
+                    label_names = [label_map[str(i)] for i in range(len(label_map))]
+                logger.info(f"Loaded {len(label_names)} emotion labels from labels.json")
+            else:
+                raise ValueError(f"No labels found in model config or labels.json")
         
         # Load generation model
         logger.info(f"Loading generation model: {GENERATION_MODEL_NAME}")

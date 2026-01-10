@@ -187,6 +187,46 @@ const updateDiaryValidation = [
 ];
 
 /**
+ * Helper function to get emotion category from topLabel
+ * Works with plain objects (from .lean())
+ */
+const getEmotionCategory = (topLabel) => {
+  const positive = [
+    "admiration",
+    "amusement",
+    "approval",
+    "caring",
+    "desire",
+    "excitement",
+    "gratitude",
+    "joy",
+    "love",
+    "optimism",
+    "pride",
+    "relief",
+  ];
+  const negative = [
+    "anger",
+    "annoyance",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "fear",
+    "grief",
+    "nervousness",
+    "remorse",
+    "sadness",
+  ];
+  const ambiguous = ["confusion", "curiosity", "realization", "surprise"];
+
+  if (positive.includes(topLabel)) return "positive";
+  if (negative.includes(topLabel)) return "negative";
+  if (ambiguous.includes(topLabel)) return "ambiguous";
+  return "neutral";
+};
+
+/**
  * Helper function to format diary response
  */
 const formatDiaryResponse = (diary, emotion = null) => {
@@ -211,7 +251,7 @@ const formatDiaryResponse = (diary, emotion = null) => {
       topEmotion: emotion.topLabel,
       detectedEmotions: emotion.detectedEmotions,
       confidence: emotion.confidence,
-      category: emotion.getEmotionCategory(),
+      category: getEmotionCategory(emotion.topLabel),
     };
   }
 
@@ -257,6 +297,11 @@ router.get(
       const skip = (page - 1) * limit;
       const sort = req.query.sort || "-date";
 
+      console.log(`[Diary GET] Fetching diaries for user: ${req.userId}`);
+      console.log(
+        `[Diary GET] Query params: page=${page}, limit=${limit}, sort=${sort}`
+      );
+
       // Get diaries for the authenticated user
       const diaries = await Diary.find({ user: req.userId })
         .sort(sort)
@@ -264,8 +309,12 @@ router.get(
         .limit(limit)
         .lean();
 
+      console.log(`[Diary GET] Found ${diaries.length} diaries`);
+
       // Get total count for pagination
       const total = await Diary.countDocuments({ user: req.userId });
+
+      console.log(`[Diary GET] Total diaries for user: ${total}`);
 
       // Get emotions for these diaries
       const diaryIds = diaries.map((d) => d._id);
