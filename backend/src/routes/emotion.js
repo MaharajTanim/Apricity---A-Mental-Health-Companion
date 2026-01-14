@@ -266,6 +266,125 @@ router.get(
 );
 
 /**
+ * @route   GET /api/emotion/weekly-chart
+ * @desc    Get daily emotion data for the previous 7 days for charting
+ * @access  Private
+ */
+router.get("/weekly-chart", async (req, res) => {
+  try {
+    // Get the previous 7 days (including today)
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    // Fetch emotions for the user within the last 7 days
+    const emotions = await Emotion.find({
+      user: req.userId,
+      date: {
+        $gte: sevenDaysAgo,
+        $lte: today,
+      },
+    }).sort({ date: 1 });
+
+    // Initialize data for each of the last 7 days
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const weeklyData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const dayDate = new Date(today);
+      dayDate.setDate(today.getDate() - i);
+      dayDate.setHours(0, 0, 0, 0);
+
+      weeklyData.push({
+        day: dayNames[dayDate.getDay()],
+        date: dayDate.toISOString().split("T")[0],
+        positive: 0,
+        negative: 0,
+        neutral: 0,
+        ambiguous: 0,
+        totalEntries: 0,
+        dominantEmotion: null,
+        averageConfidence: 0,
+      });
+    }
+
+    // Aggregate emotions by day
+    emotions.forEach((emotion) => {
+      const emotionDate = new Date(emotion.date);
+      emotionDate.setHours(0, 0, 0, 0);
+
+      // Find the matching day in weeklyData
+      const dayIndex = weeklyData.findIndex(
+        (d) => d.date === emotionDate.toISOString().split("T")[0]
+      );
+
+      if (dayIndex >= 0) {
+        const category = emotion.getEmotionCategory();
+        weeklyData[dayIndex][category]++;
+        weeklyData[dayIndex].totalEntries++;
+        weeklyData[dayIndex].averageConfidence += emotion.confidence;
+
+        // Track dominant emotion
+        if (
+          !weeklyData[dayIndex].dominantEmotion ||
+          emotion.confidence > weeklyData[dayIndex].dominantEmotion.confidence
+        ) {
+          weeklyData[dayIndex].dominantEmotion = {
+            emotion: emotion.topLabel,
+            confidence: emotion.confidence,
+          };
+        }
+      }
+    });
+
+    // Calculate averages
+    weeklyData.forEach((day) => {
+      if (day.totalEntries > 0) {
+        day.averageConfidence = parseFloat(
+          (day.averageConfidence / day.totalEntries).toFixed(3)
+        );
+      }
+    });
+
+    // Calculate summary statistics
+    const totalEmotions = emotions.length;
+    const categoryCounts = {
+      positive: 0,
+      negative: 0,
+      neutral: 0,
+      ambiguous: 0,
+    };
+    emotions.forEach((emotion) => {
+      const category = emotion.getEmotionCategory();
+      categoryCounts[category]++;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        weekStart: sevenDaysAgo.toISOString().split("T")[0],
+        weekEnd: today.toISOString().split("T")[0],
+        dailyData: weeklyData,
+        summary: {
+          totalEmotions,
+          categoryCounts,
+          daysWithEntries: weeklyData.filter((d) => d.totalEntries > 0).length,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching weekly chart data:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching weekly chart data",
+    });
+  }
+});
+
+/**
  * @route   GET /api/emotion/suggest
  * @desc    Get warnings if negative emotions exceed thresholds
  * @access  Private

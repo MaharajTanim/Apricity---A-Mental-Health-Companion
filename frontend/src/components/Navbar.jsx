@@ -44,6 +44,15 @@ const Navbar = () => {
             </li>
             <li>
               <Link
+                to="/my-notes"
+                className={`nav-link ${isActive("/my-notes") ? "active" : ""}`}
+              >
+                <span className="link-icon">📝</span>
+                <span className="link-text">My Notes</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/emotion-log"
                 className={`nav-link ${
                   isActive("/emotion-log") ? "active" : ""

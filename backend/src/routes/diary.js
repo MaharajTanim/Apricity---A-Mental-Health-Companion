@@ -46,11 +46,15 @@ async function performMLAnalysis(diaryId, userId, text) {
       );
     }
 
+    // Fetch the diary to get its date
+    const diary = await Diary.findById(diaryId);
+    const emotionDate = diary ? diary.date : new Date();
+
     // Create emotion document from ML service response
     const emotion = new Emotion({
       user: userId,
       diary: diaryId,
-      date: new Date(),
+      date: emotionDate,
       scores: scores, // ML service should return scores object matching schema
       topLabel: top_label,
       detectedEmotions: Object.entries(scores)

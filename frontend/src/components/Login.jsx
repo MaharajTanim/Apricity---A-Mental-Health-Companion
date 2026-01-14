@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -67,9 +67,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const apiUrl =
-        import.meta.env.REACT_APP_API_URL || "http://localhost:5000";
-      const response = await axios.post(`${apiUrl}/api/auth/login`, {
+      const response = await api.post("/api/auth/login", {
         email: formData.email,
         password: formData.password,
       });

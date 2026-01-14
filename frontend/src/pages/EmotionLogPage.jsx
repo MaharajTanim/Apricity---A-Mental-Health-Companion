@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import api from "../utils/api";
 import { SkeletonText } from "../components/SkeletonLoader";
+import WeeklyEmotionChart from "../components/WeeklyEmotionChart";
 import "../styles/EmotionLogPage.css";
 
 const EmotionLogPage = () => {
@@ -179,6 +180,9 @@ const EmotionLogPage = () => {
           <span>{apiError}</span>
         </div>
       )}
+
+      {/* Weekly Emotion Chart - Current Week Overview */}
+      <WeeklyEmotionChart />
 
       {/* Warnings - High Priority */}
       {warnings.length > 0 && severity !== "none" && (

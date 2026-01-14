@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../utils/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -87,9 +87,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const apiUrl =
-        import.meta.env.REACT_APP_API_URL || "http://localhost:5000";
-      const response = await axios.post(`${apiUrl}/api/auth/register`, {
+      const response = await api.post("/api/auth/register", {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
@@ -207,10 +205,14 @@ const Register = () => {
             value={formData.password}
             onChange={handleChange}
             className={errors.password ? "input-error" : ""}
-            placeholder="At least 6 characters"
+            placeholder="Create a strong password"
             disabled={isLoading}
             autoComplete="new-password"
           />
+          <small className="password-hint">
+            Must be at least 8 characters with uppercase, lowercase, and a
+            number
+          </small>
           {errors.password && (
             <span className="field-error">{errors.password}</span>
           )}

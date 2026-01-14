@@ -9,6 +9,7 @@ import HomeDashboard from "./pages/HomeDashboard";
 import EditDiary from "./pages/EditDiary";
 import ProfilePage from "./pages/ProfilePage";
 import EmotionLogPage from "./pages/EmotionLogPage";
+import MyNotesPage from "./pages/MyNotesPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
 // Components
@@ -57,6 +58,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EmotionLogPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-notes"
+              element={
+                <ProtectedRoute>
+                  <MyNotesPage />
                 </ProtectedRoute>
               }
             />

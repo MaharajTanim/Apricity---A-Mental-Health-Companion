@@ -1,0 +1,269 @@
+.weekly-chart-container {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.header-title h3 {
+  margin: 0;
+  color: #517c61;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.date-range {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: block;
+}
+
+.chart-summary {
+  display: flex;
+  gap: 20px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f0f7f4;
+  border-radius: 8px;
+}
+
+.summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #517c61;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Loading state */
+.chart-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #517c61;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error state */
+.chart-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+}
+
+.chart-error p {
+  color: #ef4444;
+  margin: 0 0 16px 0;
+}
+
+.retry-btn {
+  padding: 8px 20px;
+  background: #517c61;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.retry-btn:hover {
+  background: #456b53;
+}
+
+/* Empty state */
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.chart-empty p {
+  color: #374151;
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+}
+
+.empty-hint {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Chart wrapper */
+.chart-wrapper {
+  margin-top: 16px;
+}
+
+/* Custom tooltip */
+.chart-tooltip {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip-label {
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.tooltip-item {
+  margin: 4px 0;
+  font-size: 0.875rem;
+}
+
+.tooltip-total {
+  margin: 8px 0 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Daily breakdown */
+.daily-breakdown {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.day-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  background: #f9fafb;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.day-card:hover {
+  background: #f0f7f4;
+  transform: translateY(-2px);
+}
+
+.day-card.no-data {
+  opacity: 0.5;
+}
+
+.day-name {
+  font-weight: 600;
+  color: #517c61;
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+}
+
+.day-entries {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.day-emotion {
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-transform: capitalize;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.day-empty {
+  font-size: 1.25rem;
+  color: #d1d5db;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .weekly-chart-container {
+    padding: 16px;
+  }
+
+  .chart-header {
+    flex-direction: column;
+  }
+
+  .chart-summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .daily-breakdown {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .daily-breakdown {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .summary-item {
+    padding: 6px 12px;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+}
