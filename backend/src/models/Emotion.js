@@ -4,8 +4,21 @@ const { Schema } = mongoose;
 /**
  * Emotion Schema
  * Represents emotion detection results for user text/diary entries
- * Based on GoEmotions dataset (28 emotions)
+ * Supports both:
+ * - GoEmotions dataset (28 emotions) from RoBERTa model
+ * - Ekman emotions (5 emotions: anger, fear, joy, sadness, surprise) from custom DeBERTa model
  */
+
+// All valid emotion labels (28 GoEmotions + 5 Ekman)
+const ALL_EMOTION_LABELS = [
+  // 28 GoEmotions labels
+  "admiration", "amusement", "anger", "annoyance", "approval", "caring",
+  "confusion", "curiosity", "desire", "disappointment", "disapproval",
+  "disgust", "embarrassment", "excitement", "fear", "gratitude", "grief",
+  "joy", "love", "nervousness", "optimism", "pride", "realization",
+  "relief", "remorse", "sadness", "surprise", "neutral"
+];
+
 const EmotionSchema = new Schema(
   {
     user: {
@@ -20,112 +33,26 @@ const EmotionSchema = new Schema(
       default: Date.now,
       index: true,
     },
-    // Multi-label emotion scores (GoEmotions 28 labels)
+    // Flexible scores object - accepts any emotion labels
     scores: {
-      // Positive emotions
-      admiration: { type: Number, min: 0, max: 1, default: 0 },
-      amusement: { type: Number, min: 0, max: 1, default: 0 },
-      approval: { type: Number, min: 0, max: 1, default: 0 },
-      caring: { type: Number, min: 0, max: 1, default: 0 },
-      desire: { type: Number, min: 0, max: 1, default: 0 },
-      excitement: { type: Number, min: 0, max: 1, default: 0 },
-      gratitude: { type: Number, min: 0, max: 1, default: 0 },
-      joy: { type: Number, min: 0, max: 1, default: 0 },
-      love: { type: Number, min: 0, max: 1, default: 0 },
-      optimism: { type: Number, min: 0, max: 1, default: 0 },
-      pride: { type: Number, min: 0, max: 1, default: 0 },
-      relief: { type: Number, min: 0, max: 1, default: 0 },
-
-      // Negative emotions
-      anger: { type: Number, min: 0, max: 1, default: 0 },
-      annoyance: { type: Number, min: 0, max: 1, default: 0 },
-      disappointment: { type: Number, min: 0, max: 1, default: 0 },
-      disapproval: { type: Number, min: 0, max: 1, default: 0 },
-      disgust: { type: Number, min: 0, max: 1, default: 0 },
-      embarrassment: { type: Number, min: 0, max: 1, default: 0 },
-      fear: { type: Number, min: 0, max: 1, default: 0 },
-      grief: { type: Number, min: 0, max: 1, default: 0 },
-      nervousness: { type: Number, min: 0, max: 1, default: 0 },
-      remorse: { type: Number, min: 0, max: 1, default: 0 },
-      sadness: { type: Number, min: 0, max: 1, default: 0 },
-
-      // Ambiguous emotions
-      confusion: { type: Number, min: 0, max: 1, default: 0 },
-      curiosity: { type: Number, min: 0, max: 1, default: 0 },
-      realization: { type: Number, min: 0, max: 1, default: 0 },
-      surprise: { type: Number, min: 0, max: 1, default: 0 },
-
-      // Neutral
-      neutral: { type: Number, min: 0, max: 1, default: 0 },
+      type: Map,
+      of: {
+        type: Number,
+        min: 0,
+        max: 1,
+      },
+      default: {},
     },
     topLabel: {
       type: String,
       required: [true, "Top emotion label is required"],
-      enum: [
-        "admiration",
-        "amusement",
-        "anger",
-        "annoyance",
-        "approval",
-        "caring",
-        "confusion",
-        "curiosity",
-        "desire",
-        "disappointment",
-        "disapproval",
-        "disgust",
-        "embarrassment",
-        "excitement",
-        "fear",
-        "gratitude",
-        "grief",
-        "joy",
-        "love",
-        "nervousness",
-        "optimism",
-        "pride",
-        "realization",
-        "relief",
-        "remorse",
-        "sadness",
-        "surprise",
-        "neutral",
-      ],
+      enum: ALL_EMOTION_LABELS,
       index: true,
     },
     detectedEmotions: [
       {
         type: String,
-        enum: [
-          "admiration",
-          "amusement",
-          "anger",
-          "annoyance",
-          "approval",
-          "caring",
-          "confusion",
-          "curiosity",
-          "desire",
-          "disappointment",
-          "disapproval",
-          "disgust",
-          "embarrassment",
-          "excitement",
-          "fear",
-          "gratitude",
-          "grief",
-          "joy",
-          "love",
-          "nervousness",
-          "optimism",
-          "pride",
-          "realization",
-          "relief",
-          "remorse",
-          "sadness",
-          "surprise",
-          "neutral",
-        ],
+        enum: ALL_EMOTION_LABELS,
       },
     ],
     confidence: {
@@ -171,7 +98,12 @@ EmotionSchema.index({ diary: 1 }, { sparse: true });
 
 // Instance methods
 EmotionSchema.methods.getTopEmotions = function (limit = 5) {
-  const emotionArray = Object.entries(this.scores)
+  // Handle Map type for scores
+  const scoresObj = this.scores instanceof Map 
+    ? Object.fromEntries(this.scores) 
+    : this.scores;
+  
+  const emotionArray = Object.entries(scoresObj || {})
     .filter(([key, value]) => value > 0)
     .map(([emotion, score]) => ({ emotion, score }))
     .sort((a, b) => b.score - a.score)
@@ -181,33 +113,17 @@ EmotionSchema.methods.getTopEmotions = function (limit = 5) {
 };
 
 EmotionSchema.methods.getEmotionCategory = function () {
+  // Positive emotions (GoEmotions + Ekman's joy)
   const positive = [
-    "admiration",
-    "amusement",
-    "approval",
-    "caring",
-    "desire",
-    "excitement",
-    "gratitude",
-    "joy",
-    "love",
-    "optimism",
-    "pride",
-    "relief",
+    "admiration", "amusement", "approval", "caring", "desire",
+    "excitement", "gratitude", "joy", "love", "optimism", "pride", "relief",
   ];
+  // Negative emotions (GoEmotions + Ekman's anger, fear, sadness)
   const negative = [
-    "anger",
-    "annoyance",
-    "disappointment",
-    "disapproval",
-    "disgust",
-    "embarrassment",
-    "fear",
-    "grief",
-    "nervousness",
-    "remorse",
-    "sadness",
+    "anger", "annoyance", "disappointment", "disapproval", "disgust",
+    "embarrassment", "fear", "grief", "nervousness", "remorse", "sadness",
   ];
+  // Ambiguous emotions (GoEmotions + Ekman's surprise)
   const ambiguous = ["confusion", "curiosity", "realization", "surprise"];
 
   if (positive.includes(this.topLabel)) return "positive";
