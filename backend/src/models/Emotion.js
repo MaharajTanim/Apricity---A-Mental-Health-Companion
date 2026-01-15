@@ -12,11 +12,34 @@ const { Schema } = mongoose;
 // All valid emotion labels (28 GoEmotions + 5 Ekman)
 const ALL_EMOTION_LABELS = [
   // 28 GoEmotions labels
-  "admiration", "amusement", "anger", "annoyance", "approval", "caring",
-  "confusion", "curiosity", "desire", "disappointment", "disapproval",
-  "disgust", "embarrassment", "excitement", "fear", "gratitude", "grief",
-  "joy", "love", "nervousness", "optimism", "pride", "realization",
-  "relief", "remorse", "sadness", "surprise", "neutral"
+  "admiration",
+  "amusement",
+  "anger",
+  "annoyance",
+  "approval",
+  "caring",
+  "confusion",
+  "curiosity",
+  "desire",
+  "disappointment",
+  "disapproval",
+  "disgust",
+  "embarrassment",
+  "excitement",
+  "fear",
+  "gratitude",
+  "grief",
+  "joy",
+  "love",
+  "nervousness",
+  "optimism",
+  "pride",
+  "realization",
+  "relief",
+  "remorse",
+  "sadness",
+  "surprise",
+  "neutral",
 ];
 
 const EmotionSchema = new Schema(
@@ -99,10 +122,9 @@ EmotionSchema.index({ diary: 1 }, { sparse: true });
 // Instance methods
 EmotionSchema.methods.getTopEmotions = function (limit = 5) {
   // Handle Map type for scores
-  const scoresObj = this.scores instanceof Map 
-    ? Object.fromEntries(this.scores) 
-    : this.scores;
-  
+  const scoresObj =
+    this.scores instanceof Map ? Object.fromEntries(this.scores) : this.scores;
+
   const emotionArray = Object.entries(scoresObj || {})
     .filter(([key, value]) => value > 0)
     .map(([emotion, score]) => ({ emotion, score }))
@@ -115,13 +137,32 @@ EmotionSchema.methods.getTopEmotions = function (limit = 5) {
 EmotionSchema.methods.getEmotionCategory = function () {
   // Positive emotions (GoEmotions + Ekman's joy)
   const positive = [
-    "admiration", "amusement", "approval", "caring", "desire",
-    "excitement", "gratitude", "joy", "love", "optimism", "pride", "relief",
+    "admiration",
+    "amusement",
+    "approval",
+    "caring",
+    "desire",
+    "excitement",
+    "gratitude",
+    "joy",
+    "love",
+    "optimism",
+    "pride",
+    "relief",
   ];
   // Negative emotions (GoEmotions + Ekman's anger, fear, sadness)
   const negative = [
-    "anger", "annoyance", "disappointment", "disapproval", "disgust",
-    "embarrassment", "fear", "grief", "nervousness", "remorse", "sadness",
+    "anger",
+    "annoyance",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "fear",
+    "grief",
+    "nervousness",
+    "remorse",
+    "sadness",
   ];
   // Ambiguous emotions (GoEmotions + Ekman's surprise)
   const ambiguous = ["confusion", "curiosity", "realization", "surprise"];
