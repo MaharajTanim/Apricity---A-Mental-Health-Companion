@@ -4,43 +4,11 @@ const { Schema } = mongoose;
 /**
  * Emotion Schema
  * Represents emotion detection results for user text/diary entries
- * Supports both:
- * - GoEmotions dataset (28 emotions) from RoBERTa model
- * - Ekman emotions (5 emotions: anger, fear, joy, sadness, surprise) from custom DeBERTa model
+ * Uses 5 core emotions mapped from GoEmotions (28 labels)
  */
 
-// All valid emotion labels (28 GoEmotions + 5 Ekman)
-const ALL_EMOTION_LABELS = [
-  // 28 GoEmotions labels
-  "admiration",
-  "amusement",
-  "anger",
-  "annoyance",
-  "approval",
-  "caring",
-  "confusion",
-  "curiosity",
-  "desire",
-  "disappointment",
-  "disapproval",
-  "disgust",
-  "embarrassment",
-  "excitement",
-  "fear",
-  "gratitude",
-  "grief",
-  "joy",
-  "love",
-  "nervousness",
-  "optimism",
-  "pride",
-  "realization",
-  "relief",
-  "remorse",
-  "sadness",
-  "surprise",
-  "neutral",
-];
+// 5 Core emotion labels (mapped from fine-grained emotions)
+const CORE_EMOTION_LABELS = ["anger", "joy", "fear", "sadness", "surprise"];
 
 const EmotionSchema = new Schema(
   {
@@ -56,7 +24,7 @@ const EmotionSchema = new Schema(
       default: Date.now,
       index: true,
     },
-    // Flexible scores object - accepts any emotion labels
+    // Core emotion scores (5 emotions)
     scores: {
       type: Map,
       of: {
@@ -69,13 +37,13 @@ const EmotionSchema = new Schema(
     topLabel: {
       type: String,
       required: [true, "Top emotion label is required"],
-      enum: ALL_EMOTION_LABELS,
+      enum: CORE_EMOTION_LABELS,
       index: true,
     },
     detectedEmotions: [
       {
         type: String,
-        enum: ALL_EMOTION_LABELS,
+        enum: CORE_EMOTION_LABELS,
       },
     ],
     confidence: {
@@ -135,41 +103,12 @@ EmotionSchema.methods.getTopEmotions = function (limit = 5) {
 };
 
 EmotionSchema.methods.getEmotionCategory = function () {
-  // Positive emotions (GoEmotions + Ekman's joy)
-  const positive = [
-    "admiration",
-    "amusement",
-    "approval",
-    "caring",
-    "desire",
-    "excitement",
-    "gratitude",
-    "joy",
-    "love",
-    "optimism",
-    "pride",
-    "relief",
-  ];
-  // Negative emotions (GoEmotions + Ekman's anger, fear, sadness)
-  const negative = [
-    "anger",
-    "annoyance",
-    "disappointment",
-    "disapproval",
-    "disgust",
-    "embarrassment",
-    "fear",
-    "grief",
-    "nervousness",
-    "remorse",
-    "sadness",
-  ];
-  // Ambiguous emotions (GoEmotions + Ekman's surprise)
-  const ambiguous = ["confusion", "curiosity", "realization", "surprise"];
+  // For 5 core emotions, map to positive/negative sentiment
+  const positive = ["joy", "surprise"];
+  const negative = ["anger", "fear", "sadness"];
 
   if (positive.includes(this.topLabel)) return "positive";
   if (negative.includes(this.topLabel)) return "negative";
-  if (ambiguous.includes(this.topLabel)) return "ambiguous";
   return "neutral";
 };
 

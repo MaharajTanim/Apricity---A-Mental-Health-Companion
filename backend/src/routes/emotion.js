@@ -289,7 +289,7 @@ router.get("/weekly-chart", async (req, res) => {
       },
     }).sort({ date: 1 });
 
-    // Initialize data for each of the last 7 days
+    // Initialize data for each of the last 7 days with 5 core emotions
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const weeklyData = [];
 
@@ -301,10 +301,12 @@ router.get("/weekly-chart", async (req, res) => {
       weeklyData.push({
         day: dayNames[dayDate.getDay()],
         date: dayDate.toISOString().split("T")[0],
-        positive: 0,
-        negative: 0,
-        neutral: 0,
-        ambiguous: 0,
+        // 5 core emotions
+        anger: 0,
+        joy: 0,
+        fear: 0,
+        sadness: 0,
+        surprise: 0,
         totalEntries: 0,
         dominantEmotion: null,
         averageConfidence: 0,
@@ -322,8 +324,11 @@ router.get("/weekly-chart", async (req, res) => {
       );
 
       if (dayIndex >= 0) {
-        const category = emotion.getEmotionCategory();
-        weeklyData[dayIndex][category]++;
+        // Increment the core emotion count
+        const coreEmotion = emotion.topLabel;
+        if (weeklyData[dayIndex][coreEmotion] !== undefined) {
+          weeklyData[dayIndex][coreEmotion]++;
+        }
         weeklyData[dayIndex].totalEntries++;
         weeklyData[dayIndex].averageConfidence += emotion.confidence;
 
@@ -349,17 +354,19 @@ router.get("/weekly-chart", async (req, res) => {
       }
     });
 
-    // Calculate summary statistics
+    // Calculate summary statistics with 5 core emotions
     const totalEmotions = emotions.length;
-    const categoryCounts = {
-      positive: 0,
-      negative: 0,
-      neutral: 0,
-      ambiguous: 0,
+    const emotionCounts = {
+      anger: 0,
+      joy: 0,
+      fear: 0,
+      sadness: 0,
+      surprise: 0,
     };
     emotions.forEach((emotion) => {
-      const category = emotion.getEmotionCategory();
-      categoryCounts[category]++;
+      if (emotionCounts[emotion.topLabel] !== undefined) {
+        emotionCounts[emotion.topLabel]++;
+      }
     });
 
     res.status(200).json({
@@ -370,7 +377,7 @@ router.get("/weekly-chart", async (req, res) => {
         dailyData: weeklyData,
         summary: {
           totalEmotions,
-          categoryCounts,
+          emotionCounts,
           daysWithEntries: weeklyData.filter((d) => d.totalEntries > 0).length,
         },
       },

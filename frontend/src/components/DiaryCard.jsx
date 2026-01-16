@@ -5,6 +5,18 @@ const DiaryCard = ({ diary, onEdit, onDelete, formatDate }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Get emoji for core emotions
+  const getEmotionEmoji = (emotion) => {
+    const emojis = {
+      joy: "😊",
+      surprise: "😮",
+      anger: "😠",
+      sadness: "😢",
+      fear: "😨",
+    };
+    return emojis[emotion?.toLowerCase()] || "😐";
+  };
+
   // Truncate content to first 120 characters
   const truncateContent = (content) => {
     if (content.length <= 120) return content;
@@ -54,6 +66,9 @@ const DiaryCard = ({ diary, onEdit, onDelete, formatDate }) => {
         <div className="diary-card-badges">
           {diary.emotionSummary && (
             <div className="emotion-badge">
+              <span className="emotion-emoji">
+                {getEmotionEmoji(diary.emotionSummary.topEmotion)}
+              </span>
               <span className="emotion-label">
                 {diary.emotionSummary.topEmotion}
               </span>

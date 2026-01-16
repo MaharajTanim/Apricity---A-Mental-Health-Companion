@@ -6,6 +6,11 @@ const Emotion = require("../models/Emotion");
 const User = require("../models/User");
 const axios = require("axios");
 const jobQueue = require("../services/jobQueue");
+const {
+  mapToCoreEmotion,
+  mapEmotionsToCoreEmotions,
+  aggregateScoresToCoreEmotions,
+} = require("../utils/emotionMapping");
 
 const router = express.Router();
 
@@ -50,19 +55,30 @@ async function performMLAnalysis(diaryId, userId, text) {
     const diary = await Diary.findById(diaryId);
     const emotionDate = diary ? diary.date : new Date();
 
-    // Create emotion document from ML service response
+    // Map fine-grained emotion to core emotion (5 categories)
+    const coreEmotion = mapToCoreEmotion(top_label);
+    const coreScores = aggregateScoresToCoreEmotions(scores);
+    const detectedCoreEmotions = mapEmotionsToCoreEmotions(
+      Object.entries(scores)
+        .filter(([_, score]) => score > 0.1)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([emotion]) => emotion)
+    );
+
+    console.log(
+      `[ML Analysis] Original emotion: ${top_label} -> Mapped to: ${coreEmotion}`
+    );
+
+    // Create emotion document with mapped core emotion
     const emotion = new Emotion({
       user: userId,
       diary: diaryId,
       date: emotionDate,
-      scores: scores, // ML service should return scores object matching schema
-      topLabel: top_label,
-      detectedEmotions: Object.entries(scores)
-        .filter(([_, score]) => score > 0.1) // Filter emotions with score > 0.1
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5) // Top 5 emotions
-        .map(([emotion]) => emotion),
-      confidence: scores[top_label] || 0,
+      scores: coreScores, // Store aggregated core emotion scores
+      topLabel: coreEmotion, // Store mapped core emotion
+      detectedEmotions: detectedCoreEmotions, // Store mapped core emotions
+      confidence: coreScores[coreEmotion] || scores[top_label] || 0,
       sourceText: text.substring(0, 5000), // Store first 5000 chars
       modelVersion: "1.0.0",
     });
@@ -76,7 +92,7 @@ async function performMLAnalysis(diaryId, userId, text) {
       `[ML Analysis] Successfully saved emotion analysis for diary ${diaryId}`
     );
     console.log(
-      `[ML Analysis] Top emotion: ${top_label}, Confidence: ${emotion.confidence}`
+      `[ML Analysis] Core emotion: ${coreEmotion}, Confidence: ${emotion.confidence}`
     );
 
     if (summary_suggestion) {

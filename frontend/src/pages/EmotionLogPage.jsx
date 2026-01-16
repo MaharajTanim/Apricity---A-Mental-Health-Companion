@@ -90,7 +90,19 @@ const EmotionLogPage = () => {
     });
   };
 
-  // Get color for category
+  // Get color for emotion (5 core emotions)
+  const getEmotionColor = (emotion) => {
+    const colors = {
+      joy: "#10b981",
+      surprise: "#8b5cf6",
+      anger: "#ef4444",
+      sadness: "#3b82f6",
+      fear: "#f59e0b",
+    };
+    return colors[emotion] || "#6b7280";
+  };
+
+  // Get color for category (legacy support)
   const getCategoryColor = (category) => {
     const colors = {
       positive: "#10b981",

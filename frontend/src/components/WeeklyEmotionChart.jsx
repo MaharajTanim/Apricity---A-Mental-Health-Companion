@@ -163,29 +163,36 @@ const WeeklyEmotionChart = () => {
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ paddingTop: "10px" }} iconType="circle" />
               <Bar
-                dataKey="positive"
-                name="Positive"
+                dataKey="joy"
+                name="Joy"
                 fill="#10b981"
                 radius={[4, 4, 0, 0]}
                 stackId="emotions"
               />
               <Bar
-                dataKey="negative"
-                name="Negative"
+                dataKey="surprise"
+                name="Surprise"
+                fill="#8b5cf6"
+                radius={[4, 4, 0, 0]}
+                stackId="emotions"
+              />
+              <Bar
+                dataKey="anger"
+                name="Anger"
                 fill="#ef4444"
                 radius={[4, 4, 0, 0]}
                 stackId="emotions"
               />
               <Bar
-                dataKey="neutral"
-                name="Neutral"
-                fill="#6b7280"
+                dataKey="sadness"
+                name="Sadness"
+                fill="#3b82f6"
                 radius={[4, 4, 0, 0]}
                 stackId="emotions"
               />
               <Bar
-                dataKey="ambiguous"
-                name="Ambiguous"
+                dataKey="fear"
+                name="Fear"
                 fill="#f59e0b"
                 radius={[4, 4, 0, 0]}
                 stackId="emotions"
