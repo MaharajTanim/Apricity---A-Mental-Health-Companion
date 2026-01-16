@@ -266,6 +266,186 @@ router.get(
 );
 
 /**
+ * @route   GET /api/emotion/monthly-radar
+ * @desc    Get monthly emotion distribution for radar/polygon chart (5 core emotions)
+ * @access  Private
+ */
+router.get(
+  "/monthly-radar",
+  [
+    query("month")
+      .optional()
+      .isInt({ min: 0, max: 11 })
+      .withMessage("Month must be 0-11 (January=0, December=11)"),
+    query("year")
+      .optional()
+      .isInt({ min: 2000, max: 2100 })
+      .withMessage("Year must be between 2000 and 2100"),
+  ],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          errors: errors.array().map((err) => ({
+            field: err.path,
+            message: err.msg,
+          })),
+        });
+      }
+
+      // Default to current month if not specified
+      const now = new Date();
+      const month =
+        req.query.month !== undefined
+          ? parseInt(req.query.month)
+          : now.getMonth();
+      const year =
+        req.query.year !== undefined
+          ? parseInt(req.query.year)
+          : now.getFullYear();
+
+      // Calculate start and end of the month
+      const startOfMonth = new Date(year, month, 1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const endOfMonth = new Date(year, month + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+
+      // Fetch emotions for the user within the month
+      const emotions = await Emotion.find({
+        user: req.userId,
+        date: {
+          $gte: startOfMonth,
+          $lte: endOfMonth,
+        },
+      }).sort({ date: 1 });
+
+      // Initialize 5 core emotion counts
+      const emotionCounts = {
+        anger: 0,
+        joy: 0,
+        fear: 0,
+        sadness: 0,
+        surprise: 0,
+      };
+
+      // Count each core emotion
+      emotions.forEach((emotion) => {
+        const coreEmotion = emotion.topLabel;
+        if (emotionCounts[coreEmotion] !== undefined) {
+          emotionCounts[coreEmotion]++;
+        }
+      });
+
+      // Calculate total for percentage calculation
+      const totalEmotions = emotions.length;
+
+      // Prepare radar chart data (array format for Recharts RadarChart)
+      const radarData = [
+        {
+          emotion: "Joy",
+          value: emotionCounts.joy,
+          percentage:
+            totalEmotions > 0
+              ? Math.round((emotionCounts.joy / totalEmotions) * 100)
+              : 0,
+          fullMark: totalEmotions || 10,
+        },
+        {
+          emotion: "Surprise",
+          value: emotionCounts.surprise,
+          percentage:
+            totalEmotions > 0
+              ? Math.round((emotionCounts.surprise / totalEmotions) * 100)
+              : 0,
+          fullMark: totalEmotions || 10,
+        },
+        {
+          emotion: "Anger",
+          value: emotionCounts.anger,
+          percentage:
+            totalEmotions > 0
+              ? Math.round((emotionCounts.anger / totalEmotions) * 100)
+              : 0,
+          fullMark: totalEmotions || 10,
+        },
+        {
+          emotion: "Sadness",
+          value: emotionCounts.sadness,
+          percentage:
+            totalEmotions > 0
+              ? Math.round((emotionCounts.sadness / totalEmotions) * 100)
+              : 0,
+          fullMark: totalEmotions || 10,
+        },
+        {
+          emotion: "Fear",
+          value: emotionCounts.fear,
+          percentage:
+            totalEmotions > 0
+              ? Math.round((emotionCounts.fear / totalEmotions) * 100)
+              : 0,
+          fullMark: totalEmotions || 10,
+        },
+      ];
+
+      // Find dominant emotion
+      const dominantEmotion = Object.entries(emotionCounts).sort(
+        (a, b) => b[1] - a[1]
+      )[0];
+
+      // Format month name
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      res.status(200).json({
+        success: true,
+        data: {
+          month: month,
+          year: year,
+          monthName: monthNames[month],
+          startDate: startOfMonth.toISOString().split("T")[0],
+          endDate: endOfMonth.toISOString().split("T")[0],
+          totalEmotions,
+          emotionCounts,
+          radarData,
+          dominantEmotion:
+            totalEmotions > 0
+              ? {
+                  emotion: dominantEmotion[0],
+                  count: dominantEmotion[1],
+                  percentage: Math.round(
+                    (dominantEmotion[1] / totalEmotions) * 100
+                  ),
+                }
+              : null,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching monthly radar data:", error);
+      res.status(500).json({
+        success: false,
+        message: "Error fetching monthly radar data",
+      });
+    }
+  }
+);
+
+/**
  * @route   GET /api/emotion/weekly-chart
  * @desc    Get daily emotion data for the previous 7 days for charting
  * @access  Private

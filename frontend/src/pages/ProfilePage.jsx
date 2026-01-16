@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getUser, logout, setAuth } from "../utils/auth";
 import api from "../utils/api";
 import { ToastContainer, useToast } from "../components/Toast";
+import QuickStatsCard from "../components/QuickStatsCard";
 import "../styles/ProfilePage.css";
 
 const ProfilePage = () => {
@@ -306,6 +307,9 @@ const ProfilePage = () => {
           </div>
         </div>
 
+        {/* Quick Stats Card */}
+        <QuickStatsCard />
+
         {/* Account Actions Card */}
         <div className="profile-card">
           <div className="card-header">
@@ -325,42 +329,6 @@ const ProfilePage = () => {
                 <span className="btn-icon"></span>
                 Logout
               </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats Card */}
-        <div className="profile-card">
-          <div className="card-header">
-            <div className="card-header-title">
-              <span className="card-icon">📊</span>
-              <h2>Quick Stats</h2>
-            </div>
-          </div>
-
-          <div className="card-body">
-            <div className="stats-grid">
-              <div className="stat-item">
-                <span className="stat-icon">📝</span>
-                <div className="stat-info">
-                  <span className="stat-label">Journal Entries</span>
-                  <span className="stat-value">Coming Soon</span>
-                </div>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">😊</span>
-                <div className="stat-info">
-                  <span className="stat-label">Emotions Tracked</span>
-                  <span className="stat-value">Coming Soon</span>
-                </div>
-              </div>
-              <div className="stat-item">
-                <span className="stat-icon">🔥</span>
-                <div className="stat-info">
-                  <span className="stat-label">Day Streak</span>
-                  <span className="stat-value">Coming Soon</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>

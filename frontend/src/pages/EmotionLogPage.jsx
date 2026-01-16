@@ -13,6 +13,7 @@ import {
 import api from "../utils/api";
 import { SkeletonText } from "../components/SkeletonLoader";
 import WeeklyEmotionChart from "../components/WeeklyEmotionChart";
+import MonthlyEmotionRadar from "../components/MonthlyEmotionRadar";
 import "../styles/EmotionLogPage.css";
 
 const EmotionLogPage = () => {
@@ -193,8 +194,11 @@ const EmotionLogPage = () => {
         </div>
       )}
 
-      {/* Weekly Emotion Chart - Current Week Overview */}
-      <WeeklyEmotionChart />
+      {/* Weekly Emotion Chart - Current Week Overview (only when Weekly tab is active) */}
+      {range === "weekly" && <WeeklyEmotionChart />}
+
+      {/* Monthly Emotion Radar Chart (only when Monthly tab is active) */}
+      {range === "monthly" && <MonthlyEmotionRadar />}
 
       {/* Warnings - High Priority */}
       {warnings.length > 0 && severity !== "none" && (
