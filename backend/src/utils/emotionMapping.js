@@ -1,76 +1,38 @@
 /**
  * Emotion Mapping Utility
- * Maps 28 GoEmotions labels to 5 core emotions
+ * Handles 5 core emotions from DeBERTa-v3 model (Sadman4701/Deberta-v3-base-for-apricity)
+ *
+ * Core emotions: anger, fear, joy, sadness, surprise
+ * The model directly outputs these 5 emotions, no mapping needed.
  */
 
 // Core emotion labels
 const CORE_EMOTIONS = ["anger", "joy", "fear", "sadness", "surprise"];
 
-// Mapping from fine-grained emotions to core emotions
-const EMOTION_MAP = {
-  // Anger category
-  anger: "anger",
-  annoyance: "anger",
-  disapproval: "anger",
-  disgust: "anger",
-
-  // Joy category
-  joy: "joy",
-  amusement: "joy",
-  approval: "joy",
-  excitement: "joy",
-  gratitude: "joy",
-  love: "joy",
-  optimism: "joy",
-  relief: "joy",
-  pride: "joy",
-  admiration: "joy",
-  desire: "joy",
-  caring: "joy",
-
-  // Fear category
-  fear: "fear",
-  nervousness: "fear",
-
-  // Sadness category
-  sadness: "sadness",
-  disappointment: "sadness",
-  embarrassment: "sadness",
-  grief: "sadness",
-  remorse: "sadness",
-
-  // Surprise category
-  surprise: "surprise",
-  confusion: "surprise",
-  curiosity: "surprise",
-  realization: "surprise",
-
-  // Neutral maps to joy (most positive default)
-  neutral: "joy",
-};
-
 /**
- * Map a fine-grained emotion to a core emotion
- * @param {string} emotion - The fine-grained emotion label
- * @returns {string} - The mapped core emotion
+ * Validate and normalize a core emotion
+ * @param {string} emotion - The emotion label from ML model
+ * @returns {string} - The validated core emotion (lowercase)
  */
 function mapToCoreEmotion(emotion) {
   if (!emotion) return "joy"; // Default fallback
 
   const lowerEmotion = emotion.toLowerCase();
 
-  // If already a core emotion, return it
+  // The DeBERTa model directly outputs core emotions
+  // Just validate it's one of the 5 core emotions
   if (CORE_EMOTIONS.includes(lowerEmotion)) {
     return lowerEmotion;
   }
 
-  // Map to core emotion
-  return EMOTION_MAP[lowerEmotion] || "joy"; // Default to joy if unknown
+  // Fallback for any unexpected values
+  console.warn(`Unexpected emotion label: ${emotion}, defaulting to joy`);
+  return "joy";
 }
 
 /**
- * Map an array of emotions to core emotions (removes duplicates)
- * @param {string[]} emotions - Array of fine-grained emotion labels
+ * Validate an array of emotions (removes duplicates, ensures core emotions only)
+ * @param {string[]} emotions - Array of emotion labels
  * @returns {string[]} - Array of unique core emotions
  */
 function mapEmotionsToCoreEmotions(emotions) {
@@ -82,8 +44,9 @@ function mapEmotionsToCoreEmotions(emotions) {
 
 /**
  * Aggregate scores by core emotion
- * @param {Object} scores - Object with fine-grained emotion scores
- * @returns {Object} - Object with core emotion scores (max score per category)
+ * Since the model directly outputs 5 core emotions, this just validates and returns
+ * @param {Object} scores - Object with emotion scores from ML model
+ * @returns {Object} - Object with core emotion scores
  */
 function aggregateScoresToCoreEmotions(scores) {
   if (!scores) return {};
@@ -99,11 +62,11 @@ function aggregateScoresToCoreEmotions(scores) {
   // Handle Map type
   const scoresObj = scores instanceof Map ? Object.fromEntries(scores) : scores;
 
+  // The DeBERTa model directly outputs scores for 5 core emotions
   Object.entries(scoresObj).forEach(([emotion, score]) => {
-    const coreEmotion = mapToCoreEmotion(emotion);
-    // Use max score for each core emotion category
-    if (score > coreScores[coreEmotion]) {
-      coreScores[coreEmotion] = score;
+    const lowerEmotion = emotion.toLowerCase();
+    if (CORE_EMOTIONS.includes(lowerEmotion)) {
+      coreScores[lowerEmotion] = score;
     }
   });
 
@@ -126,7 +89,6 @@ function getEmotionSentiment(coreEmotion) {
 
 module.exports = {
   CORE_EMOTIONS,
-  EMOTION_MAP,
   mapToCoreEmotion,
   mapEmotionsToCoreEmotions,
   aggregateScoresToCoreEmotions,

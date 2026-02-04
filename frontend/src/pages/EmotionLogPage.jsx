@@ -47,7 +47,7 @@ const EmotionLogPage = () => {
       console.error("Error fetching emotion log:", error);
       if (error.response) {
         setApiError(
-          error.response.data.message || "Failed to load emotion log"
+          error.response.data.message || "Failed to load emotion log",
         );
       } else {
         setApiError("Cannot connect to server. Please check your connection.");
@@ -319,7 +319,7 @@ const EmotionLogPage = () => {
       )}
 
       {/* Chart */}
-      {emotionData.length > 0 ? (
+      {emotionData.length > 0 && (
         <div className="chart-card">
           <div className="chart-header">
             <h3>
@@ -391,15 +391,6 @@ const EmotionLogPage = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      ) : (
-        <div className="empty-state">
-          <span className="empty-icon">📊</span>
-          <h3>No Emotion Data Yet</h3>
-          <p>
-            Start journaling to track your emotional patterns over time. Your
-            AI-analyzed emotions will appear here.
-          </p>
         </div>
       )}
 

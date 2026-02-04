@@ -88,7 +88,7 @@ const HomeDashboard = () => {
       if (err.response) {
         error(
           err.response.data.message ||
-            "Failed to delete note. Please try again."
+            "Failed to delete note. Please try again.",
         );
       } else {
         error("Cannot connect to server. Please check your connection.");
@@ -173,11 +173,6 @@ const HomeDashboard = () => {
 
       {/* Quick Actions */}
       <div className="quick-actions">
-        <div className="action-card">
-          <span className="action-icon">💬</span>
-          <h4>Chat Support</h4>
-          <p>Talk to your AI companion</p>
-        </div>
         <div className="action-card">
           <span className="action-icon">📊</span>
           <h4>Emotion Insights</h4>

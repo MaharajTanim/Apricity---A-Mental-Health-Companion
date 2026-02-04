@@ -50,7 +50,15 @@ def test_predict():
             # Parse and display response
             result = response.json()
             
-            print("\n📥 RESPONSE:")
+            print("\n📥 RESPONSE:")Anger: mapped from Anger, Annoyance, Disapproval.
+            
+            Joy: mapped from Joy, Amusement, Approval, Excitement, Gratitude, Love, Optimism, Relief, Pride, Admiration, Desire, Caring.
+            
+            Fear: mapped from Fear, Nervousness.
+            
+            Sadness: mapped from Sadness, Disappointment, Embarrassment, Grief, Remorse.
+            
+            Surprise: mapped from Surprise, Confusion, Curiosity, Realization.
             print(json.dumps(result, indent=2))
             
             # Display key results in a friendly format

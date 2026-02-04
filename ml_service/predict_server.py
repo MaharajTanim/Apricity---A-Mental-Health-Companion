@@ -1,6 +1,9 @@
 """
 Apricity ML Service - Emotion Detection and Response Generation
-FastAPI server for DeBERTa emotion classification and FLAN-T5 response generation
+FastAPI server for DeBERTa-v3 emotion classification (5 core emotions) and FLAN-T5 response generation
+
+Model: Sadman4701/Apricity-Final
+Emotions: anger, fear, joy, sadness, surprise
 """
 
 import os
@@ -29,19 +32,22 @@ logger = logging.getLogger(__name__)
 # Global model variables
 emotion_model = None
 emotion_tokenizer = None
+emotion_labels = None  # Will be loaded from model config
 generation_model = None
 generation_tokenizer = None
-label_names = []
 device = None
 
 # Configuration
-MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "SamLowe/roberta-base-go_emotions"))
+MODEL_PATH = os.getenv("MODEL_PATH", os.getenv("EMOTION_MODEL_PATH", "Sadman4701/Apricity-Final"))
 GENERATION_MODEL_NAME = os.getenv("GENERATION_MODEL_NAME", "google/flan-t5-base")
 MAX_LENGTH = int(os.getenv("MAX_LENGTH", "192"))
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "160"))
 NUM_BEAMS = int(os.getenv("NUM_BEAMS", "4"))
 TEMPERATURE = float(os.getenv("TEMPERATURE", "0.7"))
 TOP_P = float(os.getenv("TOP_P", "0.92"))
+
+# 5 Core emotion labels for the custom DeBERTa model
+CORE_EMOTION_LABELS = ["anger", "fear", "joy", "sadness", "surprise"]
 
 # Safety keywords for crisis detection
 SELF_HARM_KEYWORDS = [
@@ -163,7 +169,7 @@ class PredictResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load models on startup, cleanup on shutdown"""
-    global emotion_model, emotion_tokenizer, generation_model, generation_tokenizer, label_names, device
+    global emotion_model, emotion_tokenizer, emotion_labels, generation_model, generation_tokenizer, device
     
     logger.info("Starting ML Service...")
     
@@ -172,28 +178,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"Using device: {device}")
     
     try:
-        # Load emotion detection model
+        # Load emotion detection model (DeBERTa-v3 for 5-class emotion classification)
         logger.info(f"Loading emotion model from {MODEL_PATH}")
-        emotion_tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
-        emotion_model = AutoModelForSequenceClassification.from_pretrained(
-            MODEL_PATH
-        ).to(device)
+        emotion_tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, use_fast=True)
+        emotion_model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+        emotion_model.to(device)
         emotion_model.eval()
         
-        # Load label names from model config (HuggingFace models have id2label)
-        if hasattr(emotion_model.config, 'id2label') and emotion_model.config.id2label:
-            label_names = [emotion_model.config.id2label[i] for i in range(len(emotion_model.config.id2label))]
-            logger.info(f"Loaded {len(label_names)} emotion labels from model config")
-        else:
-            # Fallback to labels.json file for local models
-            labels_path = os.path.join(MODEL_PATH, "labels.json")
-            if os.path.exists(labels_path):
-                with open(labels_path, 'r') as f:
-                    label_map = json.load(f)
-                    label_names = [label_map[str(i)] for i in range(len(label_map))]
-                logger.info(f"Loaded {len(label_names)} emotion labels from labels.json")
-            else:
-                raise ValueError(f"No labels found in model config or labels.json")
+        # Get emotion labels from model config (id2label mapping)
+        emotion_labels = [emotion_model.config.id2label[i].lower() for i in range(len(emotion_model.config.id2label))]
+        logger.info(f"Emotion model loaded successfully! Labels: {emotion_labels}")
         
         # Load generation model
         logger.info(f"Loading generation model: {GENERATION_MODEL_NAME}")
@@ -236,10 +230,12 @@ app.add_middleware(
 # Helper Functions
 def detect_emotions(text: str) -> tuple[str, float, List[str]]:
     """
-    Detect emotions using multi-label DeBERTa classifier
+    Detect emotions using 5-class DeBERTa multi-label classifier
+    Uses sigmoid (model was trained with BCEWithLogitsLoss)
     Returns: (comma_separated_emotions, confidence_score, list_of_emotions)
     """
     try:
+        # Tokenize input
         inputs = emotion_tokenizer(
             text, 
             return_tensors="pt", 
@@ -250,20 +246,27 @@ def detect_emotions(text: str) -> tuple[str, float, List[str]]:
         with torch.no_grad():
             logits = emotion_model(**inputs).logits
         
-        # Multi-label prediction
-        sigmoid = torch.sigmoid(logits)
-        predictions = (sigmoid > 0.5).int().squeeze().cpu().numpy()
+        # Use sigmoid for multi-label classification (model trained with BCEWithLogitsLoss)
+        probs = torch.sigmoid(logits)
+        probs_np = probs.squeeze().cpu().numpy()
         
-        # Get detected emotions
-        detected = [label_names[i] for i, pred in enumerate(predictions) if pred == 1]
+        # Detect emotions with threshold >= 0.5 (as used in training)
+        detected = []
+        for i, prob in enumerate(probs_np):
+            if prob >= 0.5:
+                detected.append(emotion_labels[i])
         
-        # Fallback to highest logit if no emotions detected
+        # If no emotions detected above threshold, use the highest probability one
         if not detected:
-            max_index = torch.argmax(logits, dim=1).item()
-            detected = [label_names[max_index]]
+            max_index = probs_np.argmax()
+            detected = [emotion_labels[max_index]]
+        
+        # Get top emotion and confidence
+        max_index = probs_np.argmax()
+        top_emotion = emotion_labels[max_index]
+        confidence = float(probs_np[max_index])
         
         emotions_str = ", ".join(detected)
-        confidence = float(sigmoid.max().item())
         
         return emotions_str, confidence, detected
         
@@ -329,7 +332,8 @@ def generate_support_response(
 
 def get_emotion_scores_dict(text: str) -> tuple[Dict[str, float], str, float, List[str]]:
     """
-    Get detailed emotion scores for all labels (for /predict endpoint)
+    Get detailed emotion scores for all 5 labels (for /predict endpoint)
+    Uses sigmoid for multi-label classification (model trained with BCEWithLogitsLoss)
     Returns: (scores_dict, top_label, confidence, all_detected_list)
     """
     try:
@@ -343,25 +347,28 @@ def get_emotion_scores_dict(text: str) -> tuple[Dict[str, float], str, float, Li
         with torch.no_grad():
             logits = emotion_model(**inputs).logits
         
-        # Get probabilities for all emotions
-        sigmoid = torch.sigmoid(logits)
-        probs = sigmoid.squeeze().cpu().numpy()
+        # Use sigmoid for multi-label classification
+        probs = torch.sigmoid(logits)
+        probs_np = probs.squeeze().cpu().numpy()
         
-        # Create scores dictionary for all emotions
-        scores_dict = {label_names[i]: float(probs[i]) for i in range(len(label_names))}
+        # Create scores dictionary for all 5 emotions
+        scores_dict = {emotion_labels[i]: float(probs_np[i]) for i in range(len(emotion_labels))}
         
-        # Multi-label prediction (threshold at 0.5)
-        predictions = (sigmoid > 0.5).int().squeeze().cpu().numpy()
-        detected = [label_names[i] for i, pred in enumerate(predictions) if pred == 1]
+        # Detect emotions with threshold >= 0.5
+        detected = []
+        for i, prob in enumerate(probs_np):
+            if prob >= 0.5:
+                detected.append(emotion_labels[i])
         
-        # Get top emotion (highest score)
-        max_index = torch.argmax(logits, dim=1).item()
-        top_label = label_names[max_index]
-        confidence = float(probs[max_index])
-        
-        # Fallback if no emotions detected above threshold
+        # If no emotions detected above threshold, use the highest probability one
         if not detected:
-            detected = [top_label]
+            max_index = probs_np.argmax()
+            detected = [emotion_labels[max_index]]
+        
+        # Get top emotion and confidence (highest probability)
+        max_index = probs_np.argmax()
+        top_label = emotion_labels[max_index]
+        confidence = float(probs_np[max_index])
         
         return scores_dict, top_label, confidence, detected
         
@@ -394,6 +401,7 @@ async def health_check():
     models_loaded = all([
         emotion_model is not None,
         emotion_tokenizer is not None,
+        emotion_labels is not None,
         generation_model is not None,
         generation_tokenizer is not None
     ])
@@ -402,8 +410,48 @@ async def health_check():
         "status": "healthy" if models_loaded else "unhealthy",
         "models_loaded": models_loaded,
         "device": str(device),
-        "emotion_labels_count": len(label_names)
+        "emotion_model": MODEL_PATH,
+        "emotion_labels": emotion_labels if emotion_labels else []
     }
+
+
+@app.post("/debug-emotion")
+async def debug_emotion(request: EmotionRequest):
+    """
+    Debug endpoint to show raw probabilities for each label index
+    This helps identify label mapping issues
+    """
+    try:
+        inputs = emotion_tokenizer(
+            request.text, 
+            return_tensors="pt", 
+            truncation=True, 
+            max_length=MAX_LENGTH
+        ).to(device)
+        
+        with torch.no_grad():
+            logits = emotion_model(**inputs).logits
+        
+        probs = torch.sigmoid(logits)
+        probs_np = probs.squeeze().cpu().numpy()
+        
+        # Show raw index -> probability mapping
+        raw_scores = {}
+        for i, prob in enumerate(probs_np):
+            config_label = emotion_model.config.id2label[i]
+            raw_scores[f"idx{i}_{config_label}"] = round(float(prob), 4)
+        
+        return {
+            "text": request.text,
+            "config_id2label": emotion_model.config.id2label,
+            "emotion_labels_used": emotion_labels,
+            "raw_scores_by_index": raw_scores,
+            "max_index": int(probs_np.argmax()),
+            "max_prob": round(float(probs_np.max()), 4)
+        }
+    except Exception as e:
+        logger.error(f"Error in debug endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/predict", response_model=PredictResponse)
@@ -560,6 +608,6 @@ if __name__ == "__main__":
         "predict_server:app",
         host=host,
         port=port,
-        reload=True,
+        reload=False,  # Disable reload to avoid multiprocessing issues on Windows
         log_level="info"
     )
