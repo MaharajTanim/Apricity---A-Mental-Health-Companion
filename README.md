@@ -342,7 +342,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Tanim Maharaj** - [GitHub](https://github.com/MaharajTanim)
+- **Maharaj Hossain** - [GitHub](https://github.com/MaharajTanim)
 
 ## 🙏 Acknowledgments
 
