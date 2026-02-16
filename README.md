@@ -16,32 +16,39 @@ The system uses multi-label emotion classification to identify multiple concurre
 
 > ⚠️ **Disclaimer**: Apricity is NOT a substitute for professional mental health care. If you're experiencing a crisis, please contact emergency services or a mental health professional immediately.
 
-## 🎯 Core Features
+## � Demo Video
 
-| Feature | Description |
-|---------|-------------|
-| **Diary Journaling** | Write daily diary entries with automatic emotion analysis |
-| **Emotion Detection** | AI-powered 5-emotion classification (anger, fear, joy, sadness, surprise) |
-| **CBT Support** | Personalized responses using Cognitive Behavioral Therapy techniques |
-| **Emotion Analytics** | Track emotional patterns over time with visual charts |
-| **Crisis Detection** | Automatic detection of self-harm keywords with safety resources |
-| **User Authentication** | Secure JWT-based authentication system |
+[![Apricity Demo Video](https://img.youtube.com/vi/mOSvELGEUys/maxresdefault.jpg)](https://youtu.be/mOSvELGEUys)
+
+**▶️ [Watch the full demo on YouTube](https://youtu.be/mOSvELGEUys)**
+
+## �🎯 Core Features
+
+| Feature                 | Description                                                               |
+| ----------------------- | ------------------------------------------------------------------------- |
+| **Diary Journaling**    | Write daily diary entries with automatic emotion analysis                 |
+| **Emotion Detection**   | AI-powered 5-emotion classification (anger, fear, joy, sadness, surprise) |
+| **CBT Support**         | Personalized responses using Cognitive Behavioral Therapy techniques      |
+| **Emotion Analytics**   | Track emotional patterns over time with visual charts                     |
+| **Crisis Detection**    | Automatic detection of self-harm keywords with safety resources           |
+| **User Authentication** | Secure JWT-based authentication system                                    |
 
 ## 🧠 ML Model
 
 **Model:** [`Sadman4701/Apricity-Final`](https://huggingface.co/Sadman4701/Apricity-Final)
 
-| Specification | Details |
-|---------------|---------|
-| **Architecture** | DeBERTa-v3-base |
-| **Task** | Multi-label Emotion Classification |
-| **Emotions** | `anger`, `fear`, `joy`, `sadness`, `surprise` |
-| **Response Generation** | FLAN-T5-base with CBT prompts |
-| **Threshold** | 0.5 (sigmoid activation) |
+| Specification           | Details                                       |
+| ----------------------- | --------------------------------------------- |
+| **Architecture**        | DeBERTa-v3-base                               |
+| **Task**                | Multi-label Emotion Classification            |
+| **Emotions**            | `anger`, `fear`, `joy`, `sadness`, `surprise` |
+| **Response Generation** | FLAN-T5-base with CBT prompts                 |
+| **Threshold**           | 0.5 (sigmoid activation)                      |
 
 ## 🛠 Tech Stack
 
 ### Frontend
+
 - **React 18** - UI framework with hooks
 - **Vite** - Fast build tool and dev server
 - **React Router** - Client-side routing
@@ -49,6 +56,7 @@ The system uses multi-label emotion classification to identify multiple concurre
 - **Axios** - HTTP client
 
 ### Backend
+
 - **Node.js** - Runtime environment
 - **Express.js** - RESTful API framework
 - **MongoDB** - NoSQL database (Atlas or local)
@@ -57,6 +65,7 @@ The system uses multi-label emotion classification to identify multiple concurre
 - **bcrypt** - Password hashing
 
 ### ML Service
+
 - **FastAPI** - High-performance ML inference API
 - **PyTorch** - Deep learning framework
 - **Transformers (Hugging Face)** - Pre-trained models
@@ -149,6 +158,7 @@ npm install
 ### 5. Configure Environment
 
 Create `backend/.env`:
+
 ```env
 PORT=5000
 NODE_ENV=development
@@ -161,6 +171,7 @@ FRONTEND_URL=http://localhost:3000
 ### 6. Start All Services
 
 **Option A: PowerShell Script (Windows)**
+
 ```powershell
 .\start.ps1
 ```
@@ -183,12 +194,12 @@ npm run dev
 
 ### 7. Access the Application
 
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:5000 |
-| ML Service | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
+| Service     | URL                        |
+| ----------- | -------------------------- |
+| Frontend    | http://localhost:3000      |
+| Backend API | http://localhost:5000      |
+| ML Service  | http://localhost:8000      |
+| API Docs    | http://localhost:8000/docs |
 
 ## 📁 Project Structure
 
@@ -224,28 +235,29 @@ Apricity/
 
 ### ML Service (Port 8000)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check with model status |
-| POST | `/predict` | Full emotion analysis (backend integration) |
-| POST | `/api/v1/detect-emotion` | Detect emotions in text |
-| POST | `/api/v1/generate-support` | Generate CBT response |
-| POST | `/api/v1/chat` | Full pipeline (emotion + response) |
-| POST | `/debug-emotion` | Debug emotion scores |
+| Method | Endpoint                   | Description                                 |
+| ------ | -------------------------- | ------------------------------------------- |
+| GET    | `/health`                  | Health check with model status              |
+| POST   | `/predict`                 | Full emotion analysis (backend integration) |
+| POST   | `/api/v1/detect-emotion`   | Detect emotions in text                     |
+| POST   | `/api/v1/generate-support` | Generate CBT response                       |
+| POST   | `/api/v1/chat`             | Full pipeline (emotion + response)          |
+| POST   | `/debug-emotion`           | Debug emotion scores                        |
 
 ### Backend (Port 5000)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | User registration |
-| POST | `/api/auth/login` | User login |
-| GET | `/api/diary` | Get user's diary entries |
-| POST | `/api/diary` | Create diary entry |
-| GET | `/api/emotion/history` | Get emotion history |
+| Method | Endpoint               | Description              |
+| ------ | ---------------------- | ------------------------ |
+| POST   | `/api/auth/register`   | User registration        |
+| POST   | `/api/auth/login`      | User login               |
+| GET    | `/api/diary`           | Get user's diary entries |
+| POST   | `/api/diary`           | Create diary entry       |
+| GET    | `/api/emotion/history` | Get emotion history      |
 
 ## 📊 Example API Usage
 
 ### Detect Emotions
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/detect-emotion \
   -H "Content-Type: application/json" \
@@ -253,6 +265,7 @@ curl -X POST http://localhost:8000/api/v1/detect-emotion \
 ```
 
 **Response:**
+
 ```json
 {
   "emotions": "joy",
@@ -262,6 +275,7 @@ curl -X POST http://localhost:8000/api/v1/detect-emotion \
 ```
 
 ### Full Chat Pipeline
+
 ```bash
 curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
@@ -269,6 +283,7 @@ curl -X POST http://localhost:8000/api/v1/chat \
 ```
 
 **Response:**
+
 ```json
 {
   "emotions": "sadness, fear",
